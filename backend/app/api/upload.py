@@ -42,7 +42,7 @@ async def upload_router(
 
       for chunk, embedding in zip(chunks, embeddings):
 
-        chunk["embedding"]=embedding
+        chunk["embedding"]=embedding.tolist()
 
       vector_store.add_documents(chunks)
       uploaded_files.append(file.filename)

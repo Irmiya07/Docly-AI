@@ -8,10 +8,22 @@ from app.api.report import router as report_router
 from app.api.clause import router as clause_router
 from app.api.risk import router as risk_router
 from app.api.timeline import router as timeline_router
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI(
     title="Docly API",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
