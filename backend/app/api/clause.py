@@ -1,10 +1,11 @@
 
 import os
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
 from app.services.chunker import chunk_service
 from app.services.contract_analyzer import contract_analyzer
+from app.services.auth_service import get_current_user
 
 router = APIRouter(
   prefix="/clause",
@@ -14,6 +15,7 @@ router = APIRouter(
 @router.post("/")
 async def analyze_clause(
   file: UploadFile = File(...),
+  current_user: dict = Depends(get_current_user)
 ):
   """
     Upload a legal document,

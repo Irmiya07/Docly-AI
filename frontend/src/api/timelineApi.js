@@ -1,12 +1,16 @@
 import api from './axios.js'
 
-export const timeline= async (file)=>{
+export const timeline = async (fileOrName) => {
   const formData = new FormData();
-  formData.append('file', file);
-  try{
+  if (typeof fileOrName === 'string') {
+    formData.append('filename', fileOrName);
+  } else {
+    formData.append('file', fileOrName);
+  }
+  try {
     const response = await api.post('/timeline', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': undefined
       }
     });
     return response.data;

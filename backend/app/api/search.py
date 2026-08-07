@@ -1,9 +1,10 @@
-from typing import  Optional
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.services.retriever import retriever
+from app.services.auth_service import get_current_user
 
 router = APIRouter(
     prefix="/search",
@@ -17,7 +18,10 @@ class SearchRequest(BaseModel):
 
 
 @router.post("/")
-async def search_router(request: SearchRequest):
+async def search_router(
+    request: SearchRequest,
+    current_user: dict = Depends(get_current_user)
+):
   try:
       filters=None
 
@@ -26,6 +30,7 @@ async def search_router(request: SearchRequest):
 
       results=retriever.retrieve(
             query=request.query,
+            user_id=str(current_user["_id"]),
             top_k=request.top_k,
             filters=filters
         )

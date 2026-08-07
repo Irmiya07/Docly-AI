@@ -12,6 +12,7 @@ class Retriever:
     def retrieve(
         self,
         query: str,
+        user_id: str,
         top_k: int = 5,
         filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
@@ -20,6 +21,7 @@ class Retriever:
 
         Args:
             query: User question.
+            user_id: Unique identifier for the user.
             top_k: Number of chunks to retrieve.
             filters: Optional metadata filters.
 
@@ -37,11 +39,21 @@ class Retriever:
             .tolist()
         )
 
+        # Combine user identification into filters
+        where = {"user_id": user_id}
+        if filters:
+            conditions = [{"user_id": user_id}]
+            for k, v in filters.items():
+                if v is not None:
+                    conditions.append({k: v})
+            if len(conditions) > 1:
+                where = {"$and": conditions}
+
         # Search vector database
         results = vector_store.search(
             query_embedding=query_embedding,
             n_results=top_k,
-            where=filters
+            where=where
         )
 
         documents = results.get("documents", [[]])[0]

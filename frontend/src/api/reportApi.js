@@ -1,13 +1,17 @@
 import api from './axios';
 
-export const generateReport= async (file)=>{
+export const generateReport = async (fileOrName) => {
   const formData = new FormData();
-  formData.append('file', file);
+  if (typeof fileOrName === 'string') {
+    formData.append('filename', fileOrName);
+  } else {
+    formData.append('file', fileOrName);
+  }
 
-  try{
+  try {
     const response = await api.post('/report', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': undefined
       }
     });
     return response.data;

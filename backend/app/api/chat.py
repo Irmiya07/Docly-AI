@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.services.retriever import retriever
 from app.services.llm import llm_service
 from app.services.citation import citation_service
+from app.services.auth_service import get_current_user
 
 router = APIRouter(
     prefix="/chat",
@@ -14,11 +15,15 @@ class ChatRequest(BaseModel):
     question: str
 
 @router.post("/")
-async def chat_router(request: ChatRequest):
+async def chat_router(
+    request: ChatRequest,
+    current_user: dict = Depends(get_current_user)
+):
 
     try:
         retrieved_chunks=retriever.retrieve(
             query=request.question,
+            user_id=str(current_user["_id"]),
             top_k=5
         )
 

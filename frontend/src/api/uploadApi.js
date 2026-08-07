@@ -10,12 +10,14 @@ export const uploadFiles = async (files) => {
     try {
         const response = await api.post("/upload/", formData, {
             headers: {
-                "Content-Type": "multipart/form-data",
-            },
+                "Content-Type": undefined
+            }
         });
         return response.data;
     } catch (error) {
-        console.error("Error uploading file:", error);
-        throw error;
-    }
+    console.log("Status:", error.response?.status);
+    console.log("Response:", error.response?.data);
+
+    throw error;
+}
 };
