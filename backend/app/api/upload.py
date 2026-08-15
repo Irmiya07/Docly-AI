@@ -15,6 +15,14 @@ router = APIRouter(
   tags=["upload"],
 )
 
+import asyncio
+import logging
+import traceback
+
+logger = logging.getLogger("docly.upload")
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
+MAX_FILE_SIZE = 15 * 1024 * 1024 # 15MB
+
 @router.post("/")
 async def upload_router(
   files: list[UploadFile] = File(...),
@@ -32,32 +40,66 @@ async def upload_router(
   uploaded_files = []
   is_guest = current_user.get("role") == "guest"
   user_id_str = str(current_user["_id"])
+  temp_paths_to_clean = []
+
+  # Early validation of formats and sizes
+  for file in files:
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}' for file '{file.filename}'. Supported formats: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File '{file.filename}' exceeds the maximum size limit of 15MB."
+        )
 
   try:
     for file in files:
       file_path = os.path.join("temp", file.filename)
+      temp_paths_to_clean.append(file_path)
 
+      # Stream large files in 1MB chunks instead of full memory buffering
+      total_bytes_written = 0
       with open(file_path, "wb") as f:
-        f.write(await file.read())
+        while True:
+          chunk = await file.read(1024 * 1024)
+          if not chunk:
+            break
+          total_bytes_written += len(chunk)
+          if total_bytes_written > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File '{file.filename}' exceeds the maximum size limit of 15MB."
+            )
+          f.write(chunk)
 
-      chunks = chunk_service.process_text([file_path])
+      logger.info(f"Buffered {file.filename} to temp: {total_bytes_written} bytes.")
+
+      # Process document extraction in a thread pool
+      chunks = await asyncio.to_thread(chunk_service.process_text, [file_path])
+
+      if not chunks:
+         logger.warning(f"No text extracted from {file.filename}.")
+         continue
 
       text = [chunk["text"] for chunk in chunks]
 
-      embeddings = embedding_service.generate_embeddings(text)
+      # Generate embeddings in a thread pool (sentence transformers are CPU/GPU-bound)
+      embeddings = await asyncio.to_thread(embedding_service.generate_embeddings, text)
 
-      document_id = None
-      if not is_guest:
-        db = get_db()
-        doc_record = {
-            "user_id": current_user["_id"],
-            "filename": file.filename,
-            "upload_time": datetime.now(timezone.utc),
-            "total_chunks": len(chunks),
-            "document_status": "indexed"
-        }
-        result = await db.documents.insert_one(doc_record)
-        document_id = str(result.inserted_id)
+      db = get_db()
+      doc_record = {
+          "user_id": current_user["_id"],
+          "filename": file.filename,
+          "upload_time": datetime.now(timezone.utc),
+          "total_chunks": len(chunks),
+          "document_status": "indexed"
+      }
+      result = await db.documents.insert_one(doc_record)
+      document_id = str(result.inserted_id)
 
       now_ts = time.time()
       for chunk, embedding in zip(chunks, embeddings):
@@ -68,32 +110,41 @@ async def upload_router(
         if document_id:
           chunk["metadata"]["document_id"] = document_id
 
-      vector_store.add_documents(chunks)
+      # Store in vector store in thread pool
+      await asyncio.to_thread(vector_store.add_documents, chunks)
       uploaded_files.append(file.filename)
       total_chunks += len(chunks)
-      os.remove(file_path)
+      
+      # Proactive cleanup of this file
+      if os.path.exists(file_path):
+        os.remove(file_path)
+        if file_path in temp_paths_to_clean:
+          temp_paths_to_clean.remove(file_path)
 
     return {
         "message": "upload successful",
         "uploaded_files": uploaded_files,
         "total_chunks": total_chunks
     }
+  except HTTPException:
+    raise
   except Exception as e:
+    logger.error(f"Error in upload_router: {traceback.format_exc()}")
     raise HTTPException(status_code=500, detail=str(e))
   finally:
-    for file in files:
-      file_path = os.path.join("temp", file.filename)
-      if os.path.exists(file_path):
-        os.remove(file_path)
+    for path in temp_paths_to_clean:
+      if os.path.exists(path):
+        try:
+          os.remove(path)
+        except Exception as err:
+          logger.error(f"Failed to clean up temp file {path}: {err}")
+
 
 
 @router.get("/")
 async def list_documents(
   current_user: dict = Depends(get_current_user)
 ):
-  is_guest = current_user.get("role") == "guest"
-  if is_guest:
-    return []
   db = get_db()
   cursor = db.documents.find({"user_id": current_user["_id"]})
   docs = []

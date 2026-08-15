@@ -12,22 +12,55 @@ router = APIRouter(
   tags=["risk"]
 )
 
+import asyncio
+import logging
+import traceback
+
+logger = logging.getLogger("docly.risk")
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
+MAX_FILE_SIZE = 15 * 1024 * 1024 # 15MB
+
 @router.post("/")
 async def risk_router(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user)
 ):
+    # Early format and size validations
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Supported formats: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail="File exceeds the maximum size limit of 15MB."
+        )
+
     os.makedirs("temp", exist_ok=True)
+    file_path = os.path.join("temp", f"risk_{file.filename}")
 
     try:
-        file_path = os.path.join("temp", file.filename)
-
+        # Stream file to disk in 1MB chunks
+        total_bytes_written = 0
         with open(file_path, "wb") as f:
-            f.write(await file.read())
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total_bytes_written += len(chunk)
+                if total_bytes_written > MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="File exceeds the maximum size limit of 15MB."
+                    )
+                f.write(chunk)
 
-        chunks = chunk_service.process_text([file_path])
+        # Process text chunks in thread pool
+        chunks = await asyncio.to_thread(chunk_service.process_text, [file_path])
 
-        print("Number of chunks:", len(chunks))
+        logger.info(f"Number of chunks: {len(chunks)}")
 
         if not chunks:
             raise HTTPException(
@@ -37,9 +70,15 @@ async def risk_router(
 
         contract_text = "\n".join(chunk["text"] for chunk in chunks)
 
-        risk_analysis_results = contract_analyzer.analyze(contract_text)
+        # Run risk analysis in thread pool
+        risk_analysis_results = await asyncio.to_thread(contract_analyzer.analyze, contract_text)
 
         risks = risk_analysis_results.get("risks", [])
+
+        # Proactive file cleanup
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        file_path = None
 
         return {
             "document": file.filename,
@@ -47,9 +86,15 @@ async def risk_router(
             "risks": risks
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error analyzing risks: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as err:
+                logger.error(f"Failed to clean up temp file '{file_path}': {err}")

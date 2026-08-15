@@ -161,6 +161,12 @@ export default function Search() {
           />
         )}
 
+        {!isLoading && !errorMessage && !searched && (
+          <div className="text-center p-12 bg-gray-50/30 border border-gray-150 border-dashed rounded-3xl text-xs font-semibold text-gray-400 select-none">
+            No active search query. Type a concept above and click search to view matching contract excerpts.
+          </div>
+        )}
+
         {!isLoading && !errorMessage && searched && results.length === 0 && (
           <EmptyState
             title="No matches found"
@@ -185,7 +191,7 @@ export default function Search() {
                 return (
                   <div
                     key={index}
-                    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs hover:shadow-md hover:border-slate-200 transition-all duration-300 flex flex-col md:flex-row gap-6 items-start"
+                    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-205 transition-all duration-300 flex flex-col md:flex-row gap-6 items-start hover:shadow-slate-100/50"
                   >
                     {/* Badge Column */}
                     <div className="flex md:flex-col items-center justify-between md:justify-center w-full md:w-28 gap-2 border-b md:border-b-0 md:border-r border-gray-100 pb-3 md:pb-0 md:pr-6">

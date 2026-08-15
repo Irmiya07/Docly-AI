@@ -108,7 +108,7 @@ export default function Compare() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Compare Contracts</h1>
           <p className="text-gray-500 mt-1">
@@ -118,7 +118,7 @@ export default function Compare() {
         {(file1 || file2 || comparison) && (
           <button
             onClick={clearCompare}
-            className="text-xs font-bold text-red-650 bg-red-50 hover:bg-red-100 border border-red-150 px-3.5 py-2 rounded-xl transition-colors shrink-0"
+            className="text-xs font-bold text-red-650 bg-red-50 hover:bg-red-100 border border-red-150 px-4 py-2.5 rounded-xl transition-all duration-150 btn-3d shadow-3d-sm active:shadow-3d-active shrink-0 self-start sm:self-auto"
           >
             Reset Form
           </button>
@@ -130,13 +130,13 @@ export default function Compare() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Box 1 (Base File) */}
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-400 transition-all duration-300 space-y-4 group">
               <h3 className="font-bold text-gray-950 text-sm md:text-base">Original Document (v1)</h3>
               
               {/* Uploader */}
               <div
                 onClick={() => file1Ref.current.click()}
-                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
+                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover:scale-101 ${
                   file1 && !file1.isMock ? "border-blue-500 bg-blue-50/20" : "border-gray-200 hover:border-blue-500"
                 }`}
               >
@@ -149,7 +149,7 @@ export default function Compare() {
                 />
                 <div className="flex flex-col items-center">
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-2.5 ${
-                    file1 && !file1.isMock ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
+                    file1 && !file1.isMock ? "bg-blue-600 text-white shadow-3d-sm" : "bg-blue-50 text-blue-600"
                   }`}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625c0-1.125-.504-1.125-1.125-1.125h-1.5M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -158,12 +158,12 @@ export default function Compare() {
                   {file1 && !file1.isMock ? (
                     <div className="max-w-[200px] overflow-hidden">
                       <p className="font-bold text-xs text-gray-900 truncate" title={file1.name}>{file1.name}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">Click to replace file</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5 font-semibold">Click to replace file</p>
                     </div>
                   ) : (
                     <div>
                       <p className="font-bold text-xs text-gray-800">Upload Base Contract</p>
-                      <p className="text-[10px] text-gray-450 mt-0.5">PDF or DOCX</p>
+                      <p className="text-[10px] text-gray-450 mt-0.5 font-semibold">PDF or DOCX</p>
                     </div>
                   )}
                 </div>
@@ -171,7 +171,7 @@ export default function Compare() {
 
               {/* Suggestions */}
               <div className="space-y-2 pt-2 border-t border-gray-50">
-                <span className="text-[9px] font-bold text-gray-400 Heart-icon uppercase tracking-widest block">Select Workspace Document:</span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block font-extrabold">Select Workspace Document:</span>
                 <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
                   {workspaceFiles?.length === 0 ? (
                     <span className="text-[10px] text-gray-450 italic">No workspace documents. Upload files to sidebar first.</span>
@@ -181,10 +181,10 @@ export default function Compare() {
                         key={doc.name}
                         type="button"
                         onClick={() => selectWorkspaceDoc(doc.name, 1)}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs border font-medium transition-all truncate ${
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs border font-semibold transition-all truncate ${
                           file1 && file1.name === doc.name
                             ? "bg-blue-50 border-blue-500 text-blue-755 font-bold"
-                            : "border-gray-150 hover:bg-gray-50 text-gray-700"
+                            : "border-gray-150 hover:bg-gray-50 text-gray-700 hover:border-gray-300"
                         }`}
                         title={doc.name}
                       >
@@ -197,13 +197,13 @@ export default function Compare() {
             </div>
 
             {/* Box 2 (Revised File) */}
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-400 transition-all duration-300 space-y-4 group">
               <h3 className="font-bold text-gray-950 text-sm md:text-base">Modified Document (v2)</h3>
               
               {/* Uploader */}
               <div
                 onClick={() => file2Ref.current.click()}
-                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
+                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover:scale-101 ${
                   file2 && !file2.isMock ? "border-blue-500 bg-blue-50/20" : "border-gray-200 hover:border-blue-500"
                 }`}
               >
@@ -216,7 +216,7 @@ export default function Compare() {
                 />
                 <div className="flex flex-col items-center">
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-2.5 ${
-                    file2 && !file2.isMock ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600"
+                    file2 && !file2.isMock ? "bg-blue-600 text-white shadow-3d-sm" : "bg-blue-50 text-blue-600"
                   }`}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625c0-1.125-.504-1.125-1.125-1.125h-1.5M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -225,12 +225,12 @@ export default function Compare() {
                   {file2 && !file2.isMock ? (
                     <div className="max-w-[200px] overflow-hidden">
                       <p className="font-bold text-xs text-gray-900 truncate" title={file2.name}>{file2.name}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">Click to replace file</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5 font-semibold">Click to replace file</p>
                     </div>
                   ) : (
                     <div>
                       <p className="font-bold text-xs text-gray-800">Upload Revised Contract</p>
-                      <p className="text-[10px] text-gray-450 mt-0.5">PDF or DOCX</p>
+                      <p className="text-[10px] text-gray-450 mt-0.5 font-semibold">PDF or DOCX</p>
                     </div>
                   )}
                 </div>
@@ -238,7 +238,7 @@ export default function Compare() {
 
               {/* Suggestions */}
               <div className="space-y-2 pt-2 border-t border-gray-50">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">Select Workspace Document:</span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block font-extrabold">Select Workspace Document:</span>
                 <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
                   {workspaceFiles?.length === 0 ? (
                     <span className="text-[10px] text-gray-450 italic">No workspace documents. Upload files to sidebar first.</span>
@@ -248,10 +248,10 @@ export default function Compare() {
                         key={doc.name}
                         type="button"
                         onClick={() => selectWorkspaceDoc(doc.name, 2)}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs border font-medium transition-all truncate ${
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs border font-semibold transition-all truncate ${
                           file2 && file2.name === doc.name
                             ? "bg-blue-50 border-blue-500 text-blue-755 font-bold"
-                            : "border-gray-150 hover:bg-gray-50 text-gray-700"
+                            : "border-gray-150 hover:bg-gray-50 text-gray-700 hover:border-gray-300"
                         }`}
                         title={doc.name}
                       >
@@ -269,7 +269,7 @@ export default function Compare() {
             <button
               type="submit"
               disabled={!file1 || !file2}
-              className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-150 disabled:text-gray-405 font-bold px-8 py-3.5 rounded-2xl text-white text-sm shadow-sm transition-colors cursor-pointer"
+              className="bg-blue-600 hover:bg-blue-500 hover:scale-101 disabled:bg-gray-150 disabled:text-gray-405 disabled:scale-100 font-extrabold px-8 py-3.5 rounded-2xl text-white text-sm shadow-3d-sm active:shadow-3d-active transition-all btn-3d cursor-pointer w-full md:w-auto"
             >
               Run Version Comparison
             </button>
@@ -292,10 +292,10 @@ export default function Compare() {
         <div className="space-y-8 animate-fade-in animate-fade-in-down">
           {/* File Indicators */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-150 py-2 px-3 rounded-lg font-medium text-gray-700">
+            <div className="flex items-center gap-1.5 text-xs bg-gray-55 border border-gray-150 py-2 px-3 rounded-lg font-medium text-gray-705">
               <span className="font-bold text-gray-400">v1:</span> {file1?.name}
             </div>
-            <div className="flex items-center gap-1.5 text-xs bg-blue-50/50 border border-blue-100 py-2 px-3 rounded-lg font-semibold text-blue-800">
+            <div className="flex items-center gap-1.5 text-xs bg-blue-50/50 border border-blue-100 py-2 px-3 rounded-lg font-semibold text-blue-808">
               <span className="font-bold text-blue-400">v2:</span> {file2?.name}
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function Compare() {
               badgeValue="Audit Delta"
               badgeType="success"
               icon={
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-emerald-605">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               }
@@ -321,7 +321,7 @@ export default function Compare() {
               badgeValue="AI Flagged"
               badgeType="warning"
               icon={
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-amber-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-amber-605">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                 </svg>
               }
@@ -333,7 +333,7 @@ export default function Compare() {
               badgeValue="Review Alert"
               badgeType="danger"
               icon={
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-red-650">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-red-600">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                 </svg>
               }
@@ -341,7 +341,14 @@ export default function Compare() {
           </div>
 
           <div className="max-w-6xl">
-            <ComparisonTable modified={md} added={ad} removed={rd} />
+            {ad.length === 0 && md.length === 0 && rd.length === 0 ? (
+              <div className="text-center p-12 bg-white border border-slate-200/80 rounded-3xl text-sm font-semibold text-slate-500 shadow-sm select-none">
+                <span className="text-emerald-700 font-bold block mb-1">✓ Identical Documents</span>
+                No clause differences or text modifications were detected between the compared agreements.
+              </div>
+            ) : (
+              <ComparisonTable modified={md} added={ad} removed={rd} />
+            )}
           </div>
         </div>
       )}

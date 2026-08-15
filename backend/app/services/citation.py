@@ -34,7 +34,8 @@ class CitationService:
                 citations.append({
                     "source": source,
                     "page": page,
-                    "chunk_index": chunk_index
+                    "chunk_index": chunk_index,
+                    "text": chunk.get("text", "")
                 })
 
         citations.sort(

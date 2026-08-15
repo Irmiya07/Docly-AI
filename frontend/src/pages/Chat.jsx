@@ -65,10 +65,11 @@ export default function Chat() {
       }
     } catch (error) {
       console.error(error);
+      const detailError = error.response?.data?.detail || "AI service is temporarily unavailable. Please try again.";
       const errorMessage = {
         id: `msg-${Date.now()}-err`,
         role: "assistant",
-        content: "Error: I encountered a failure querying the server. Please verify your backend server is active.",
+        content: `Error: ${detailError}`,
         isError: true,
         citations: []
       };
@@ -188,7 +189,7 @@ export default function Chat() {
                 <button
                   key={q}
                   onClick={() => setInput(q)}
-                  className="w-full text-left p-3 rounded-xl border border-gray-100 text-xs font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-all text-ellipsis overflow-hidden cursor-pointer"
+                  className="w-full text-left p-3 rounded-xl border border-gray-100 text-xs font-semibold text-gray-650 hover:bg-blue-50/50 hover:text-blue-600 hover:border-blue-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer select-none"
                 >
                   {q}
                 </button>
@@ -251,21 +252,7 @@ export default function Chat() {
                       </div>
                     )}
                     
-                    {/* Render Inline Citation Pills */}
-                    {!isUser && message.citations && message.citations.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1.5 items-center">
-                        <span className="text-[10px] text-gray-400 font-bold block">Sources:</span>
-                        {message.citations.map((cit, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleCitationClick(message.id)}
-                            className="bg-blue-50/80 hover:bg-blue-105 border border-blue-100 text-blue-700 font-semibold text-[10px] px-2 py-0.5 rounded-full transition-colors cursor-pointer"
-                          >
-                            [{idx + 1}] {cit.source.split("/").pop().split("\\").pop()}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+
 
                     {/* Copy and Regenerate overlay controls on AI bubble hover */}
                     {!isUser && !message.isError && (
@@ -297,6 +284,7 @@ export default function Chat() {
                       </div>
                     )}
                   </div>
+                  
                   <span className={`text-[10px] text-gray-400 font-medium px-1 block ${isUser ? "text-right" : "text-left"}`}>
                     {isUser ? "Sent" : "AI Model"}
                   </span>

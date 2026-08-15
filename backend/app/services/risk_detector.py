@@ -63,17 +63,7 @@ Clauses:
 
         prompt = self._build_prompt(clauses)
 
-        response = self.llm.generate(prompt)
-
-        try:
-            return self.llm.generate_json(prompt)
-
-        except json.JSONDecodeError:
-
-            return {
-                "error": "Invalid JSON returned by the LLM.",
-                "raw_response": response
-            }
+        return self.llm.generate_json(prompt)
 
 
 risk_detector = RiskDetector()

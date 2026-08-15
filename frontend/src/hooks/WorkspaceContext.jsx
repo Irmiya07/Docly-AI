@@ -22,7 +22,7 @@ export function WorkspaceProvider({ children }) {
    * Guest users keep documents only in memory.
    */
   const fetchDocuments = useCallback(async () => {
-    if (!token || isGuest) {
+    if (!token) {
       setFiles([]);
       return;
     }
@@ -38,7 +38,7 @@ export function WorkspaceProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [token, isGuest]);
+  }, [token]);
 
   useEffect(() => {
     fetchDocuments();
@@ -48,36 +48,6 @@ export function WorkspaceProvider({ children }) {
    * Add uploaded files
    */
   const addUploadedFiles = (fileNames) => {
-    if (isGuest) {
-      const uploaded = fileNames.map((name) => {
-        const size = Math.floor(Math.random() * 200) + 50;
-
-        return {
-          id: crypto.randomUUID(),
-          name,
-          size: `${size} KB`,
-          uploadedAt: new Date().toISOString(),
-          clauses: 0,
-          risks: 0,
-          events: 0,
-          type: name.endsWith(".pdf")
-            ? "application/pdf"
-            : "image/*",
-        };
-      });
-
-      setFiles((prev) => {
-        const existing = prev.filter(
-          (file) =>
-            !uploaded.some((u) => u.name === file.name)
-        );
-
-        return [...uploaded, ...existing];
-      });
-
-      return;
-    }
-
     fetchDocuments();
   };
 
@@ -108,13 +78,6 @@ export function WorkspaceProvider({ children }) {
    * Remove one file
    */
   const removeFile = async (name) => {
-    if (isGuest) {
-      setFiles((prev) =>
-        prev.filter((file) => file.name !== name)
-      );
-      return;
-    }
-
     try {
       await api.delete(`/upload/${encodeURIComponent(name)}`);
 
@@ -130,11 +93,6 @@ export function WorkspaceProvider({ children }) {
    * Clear workspace
    */
   const clearWorkspace = async () => {
-    if (isGuest) {
-      setFiles([]);
-      return;
-    }
-
     try {
       await api.delete("/upload/clear");
     } catch (error) {

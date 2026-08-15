@@ -17,23 +17,26 @@ class SearchRequest(BaseModel):
     source: Optional[str] = None
 
 
+import asyncio
+
 @router.post("/")
 async def search_router(
     request: SearchRequest,
     current_user: dict = Depends(get_current_user)
 ):
   try:
-      filters=None
+      filters = None
 
       if request.source:
-            filters={"source": request.source}
+            filters = {"source": request.source}
 
-      results=retriever.retrieve(
-            query=request.query,
-            user_id=str(current_user["_id"]),
-            top_k=request.top_k,
-            filters=filters
-        )
+      results = await asyncio.to_thread(
+          retriever.retrieve,
+          query=request.query,
+          user_id=str(current_user["_id"]),
+          top_k=request.top_k,
+          filters=filters
+      )
       return {
           
             "query": request.query,
@@ -42,3 +45,4 @@ async def search_router(
         }
   except Exception as e:
       raise HTTPException(status_code=500, detail=str(e))
+

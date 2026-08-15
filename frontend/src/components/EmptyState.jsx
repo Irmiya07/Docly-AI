@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function EmptyState({ title, description, icon, actionLabel, onAction }) {
   return (

@@ -13,6 +13,14 @@ router = APIRouter(
 )
 
 
+import asyncio
+import logging
+import traceback
+
+logger = logging.getLogger("docly.timeline")
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
+MAX_FILE_SIZE = 15 * 1024 * 1024 # 15MB
+
 @router.post("/")
 async def timeline_router(
     file: UploadFile = File(None),
@@ -29,18 +37,38 @@ async def timeline_router(
 
     try:
         if file:
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unsupported file format '{ext}'. Supported formats: {', '.join(ALLOWED_EXTENSIONS)}"
+                )
+            if file.size and file.size > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail="File exceeds the maximum size limit of 15MB."
+                )
+
             os.makedirs("temp", exist_ok=True)
-            file_path = os.path.join(
-                "temp",
-                file.filename
-            )
+            file_path = os.path.join("temp", f"timeline_{file.filename}")
 
+            # Stream file to disk in 1MB chunks
+            total_bytes_written = 0
             with open(file_path, "wb") as buffer:
-                buffer.write(await file.read())
+                while True:
+                    chunk = await file.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total_bytes_written += len(chunk)
+                    if total_bytes_written > MAX_FILE_SIZE:
+                        raise HTTPException(
+                            status_code=413,
+                            detail="File exceeds the maximum size limit of 15MB."
+                        )
+                    buffer.write(chunk)
 
-            chunks = chunk_service.process_text(
-                [file_path]
-            )
+            # Process text chunks in thread pool
+            chunks = await asyncio.to_thread(chunk_service.process_text, [file_path])
 
             if not chunks:
                 raise HTTPException(
@@ -48,15 +76,18 @@ async def timeline_router(
                     detail="No text could be extracted."
                 )
 
-            contract_text = "\n".join(
-                chunk["text"]
-                for chunk in chunks
-            )
-            os.remove(file_path)
+            contract_text = "\n".join(chunk["text"] for chunk in chunks)
+            
+            # Clean up uploaded file proactively
+            if os.path.exists(file_path):
+                os.remove(file_path)
             file_path = None
         elif filename:
             from app.services.vector_store import vector_store
-            results = vector_store.collection.get(
+            
+            # Fetch document chunks from vector store in thread pool
+            results = await asyncio.to_thread(
+                vector_store.collection.get,
                 where={
                     "$and": [
                         {"user_id": user_id_str},
@@ -80,29 +111,27 @@ async def timeline_router(
                 detail="Either file or filename must be provided."
             )
 
-        analysis = contract_analyzer.analyze(
-            contract_text
-        )
+        # Run timeline extraction in thread pool
+        analysis = await asyncio.to_thread(contract_analyzer.analyze, contract_text)
 
         return {
             "document": file.filename if file else filename,
-            "total_events": len(
-                analysis.get("timeline", [])
-            ),
-            "timeline": analysis.get(
-                "timeline",
-                []
-            )
+            "total_events": len(analysis.get("timeline", [])),
+            "timeline": analysis.get("timeline", [])
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-
+        logger.error(f"Error extracting timeline events: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=str(e)
         )
 
     finally:
-
         if file_path and os.path.exists(file_path):
-            os.remove(file_path)
+            try:
+                os.remove(file_path)
+            except Exception as err:
+                logger.error(f"Failed to clean up temp file '{file_path}': {err}")

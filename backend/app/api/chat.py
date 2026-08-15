@@ -14,6 +14,8 @@ router = APIRouter(
 class ChatRequest(BaseModel):
     question: str
 
+import asyncio
+
 @router.post("/")
 async def chat_router(
     request: ChatRequest,
@@ -21,7 +23,8 @@ async def chat_router(
 ):
 
     try:
-        retrieved_chunks=retriever.retrieve(
+        retrieved_chunks = await asyncio.to_thread(
+            retriever.retrieve,
             query=request.question,
             user_id=str(current_user["_id"]),
             top_k=5
@@ -34,12 +37,13 @@ async def chat_router(
                 "citations": []
             }
 
-        answer=llm_service.generate_answer(
+        answer = await asyncio.to_thread(
+            llm_service.generate_answer,
             request.question,
             retrieved_chunks
         )
 
-        citations=citation_service.format_sources(
+        citations = citation_service.format_sources(
             retrieved_chunks
         )
         return {
@@ -53,4 +57,5 @@ async def chat_router(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 

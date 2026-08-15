@@ -84,7 +84,7 @@ export default function Timeline() {
         {file && (
           <button
             onClick={clearTimeline}
-            className="text-xs font-bold text-red-655 bg-red-50 hover:bg-red-100 border border-red-150 px-3.5 py-2 rounded-xl transition-colors shrink-0"
+            className="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-250/80 px-4 py-2.5 rounded-xl transition-all duration-150 btn-3d shadow-3d-sm active:shadow-3d-active shrink-0 self-start sm:self-auto"
           >
             Clear Sheet
           </button>
@@ -96,7 +96,7 @@ export default function Timeline() {
           {/* Upload Box */}
           <div
             onClick={triggerUploadClick}
-            className="border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center bg-white hover:border-blue-500 hover:shadow-lg hover:shadow-blue-50/20 cursor-pointer transition-all duration-300"
+            className="card-3d border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center bg-white hover:border-blue-500 hover:shadow-3d-lg cursor-pointer transition-all duration-300 relative overflow-hidden group shadow-md"
           >
             <input
               type="file"
@@ -113,7 +113,7 @@ export default function Timeline() {
               </div>
               <h3 className="text-lg font-bold text-gray-905">Upload Legal Document</h3>
               <p className="text-sm text-gray-400 mt-1 mb-5">Identify dates, events, and descriptions in a vertical sequence</p>
-              <span className="text-xs bg-blue-600 hover:bg-blue-500 font-semibold rounded-xl text-white px-4 py-2.5 shadow-xs transition-colors">
+              <span className="text-xs bg-blue-600 hover:bg-blue-550 shadow-3d-sm active:shadow-3d-active font-extrabold rounded-xl text-white px-5 py-2.75 transition-all btn-3d">
                 Browse System Files
               </span>
             </div>
@@ -137,7 +137,7 @@ export default function Timeline() {
                   <div
                     key={idx}
                     onClick={() => loadWorkspaceDoc(doc.name)}
-                    className="bg-white p-5 rounded-2xl border border-gray-150 hover:border-blue-500 hover:shadow-md cursor-pointer transition-all duration-300 flex flex-col justify-between group"
+                    className="card-3d bg-white p-5 rounded-2xl border border-gray-150 hover:border-blue-500 shadow-3d-sm hover:shadow-3d-md cursor-pointer transition-all duration-300 flex flex-col justify-between group"
                   >
                     <div className="space-y-2">
                       <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-full uppercase">

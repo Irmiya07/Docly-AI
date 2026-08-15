@@ -14,7 +14,7 @@ export const compareDocs = async (fileOrName1, fileOrName2) => {
   }
 
   try {
-    const response = await api.post('/compare', formData, {
+    const response = await api.post('/compare/', formData, {
       headers: {
         'Content-Type': undefined
       }

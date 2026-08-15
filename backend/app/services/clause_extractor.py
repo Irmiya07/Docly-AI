@@ -55,19 +55,21 @@ Contract:
         text: str
     ) -> List[Dict[str, Any]] | Dict[str, Any]:
 
+        import re
+        # Compress redundant whitespaces and newlines
+        text = re.sub(r'\n\s*\n', '\n', text)
+        text = re.sub(r' {2,}', ' ', text)
+        
+        # Truncate if unnecessarily large
+        if len(text) > 50000:
+            import logging
+            logger = logging.getLogger("docly.clause_extractor")
+            logger.warning(f"Input text too large ({len(text)} chars). Truncating to 50000.")
+            text = text[:50000] + "\n\n[... Truncated for length limits ...]"
+
         prompt = self._build_prompt(text)
 
-        response = self.llm.generate(prompt)
-
-        try:
-            return self.llm.generate_json(prompt)
-
-        except json.JSONDecodeError:
-
-            return {
-                "error": "Invalid JSON returned by the LLM.",
-                "raw_response": response
-            }
+        return self.llm.generate_json(prompt)
 
 
 clause_extractor = ClauseExtractor()

@@ -1,6 +1,7 @@
 import asyncio
 import time
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.upload import router as upload_router
@@ -13,12 +14,20 @@ from app.api.risk import router as risk_router
 from app.api.timeline import router as timeline_router
 from app.api.auth import router as auth_router
 from app.services.vector_store import vector_store
+from app.services.llm import GeminiQuotaExceededError
 
 
 app = FastAPI(
     title="Docly API",
     version="1.0.0"
 )
+
+@app.exception_handler(GeminiQuotaExceededError)
+async def gemini_quota_exceeded_handler(request: Request, exc: GeminiQuotaExceededError):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Gemini API quota has been reached. Please try again later."}
+    )
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +39,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import logging
+
+logger = logging.getLogger("docly.main")
+
 async def clean_guest_sessions_periodically():
     while True:
         try:
@@ -37,9 +50,9 @@ async def clean_guest_sessions_periodically():
             threshold = time.time() - 1800
             deleted_count = vector_store.delete_expired_guests(threshold)
             if deleted_count > 0:
-                print(f"[Cleanup] Deleted {deleted_count} expired guest vectors.")
+                logger.info(f"[Cleanup] Deleted {deleted_count} expired guest vectors.")
         except Exception as e:
-            print(f"[Cleanup] Error in guest session cleanup background task: {e}")
+            logger.error(f"[Cleanup] Error in guest session cleanup background task: {e}")
         await asyncio.sleep(600)  # Run every 10 minutes
 
 @app.on_event("startup")
@@ -50,6 +63,13 @@ async def startup_event():
 async def root():
     return {"message": "Welcome to the Docly API!"}
 
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "timestamp": time.time()
+    }
+
 app.include_router(upload_router)
 app.include_router(chat_router)
 app.include_router(search_router)
@@ -59,4 +79,5 @@ app.include_router(clause_router)
 app.include_router(risk_router)
 app.include_router(timeline_router)
 app.include_router(auth_router)
+
 
