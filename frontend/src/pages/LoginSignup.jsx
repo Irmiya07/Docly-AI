@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { image } from "./../assets/artificial-intelligence.png";
 
 
 export default function LoginSignup() {
@@ -58,7 +59,7 @@ export default function LoginSignup() {
         {/* Logo */}
         <div className="text-center space-y-2">
           <div className="inline-flex h-12 w-12 rounded-2xl bg-blue-600 items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-blue-500/20">
-            <img src="./src/assets/artificial-intelligence.png" alt="Docly AI Logo" className="h-6 w-6" />
+            <img src={image} alt="Docly AI Logo" className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">Docly AI</h1>
           <p className="text-slate-400 text-xs font-semibold">Legal Document Analysis & Audit Suite</p>

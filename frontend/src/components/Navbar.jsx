@@ -1,5 +1,6 @@
 
 import { useAuth } from "../context/AuthContext";
+import {image} from "./../assets/artificial-intelligence.png";  
 
 export default function Navbar({ onToggleSidebar }) {
   const { user, isGuest, logout } = useAuth();
@@ -31,7 +32,7 @@ export default function Navbar({ onToggleSidebar }) {
 
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-200 shrink-0">
-            <img src="./src/assets/artificial-intelligence.png" alt="Docly Logo" className="h-5 w-5" />
+            <img src={image} alt="Docly Logo" className="h-5 w-5" />
           </div>
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-gray-900 text-base md:text-lg tracking-tight leading-none">Docly</span>
