@@ -10,7 +10,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app import config
-from app.services import get_db
+from app.services.database import get_db
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
