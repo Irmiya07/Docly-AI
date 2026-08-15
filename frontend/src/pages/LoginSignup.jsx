@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { image } from "./../assets/artificial-intelligence.png";
+import image  from "./../assets/artificial-intelligence.png";
 
 
 export default function LoginSignup() {

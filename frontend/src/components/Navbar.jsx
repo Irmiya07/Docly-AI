@@ -1,6 +1,6 @@
 
 import { useAuth } from "../context/AuthContext";
-import {image} from "./../assets/artificial-intelligence.png";  
+import image from "./../assets/artificial-intelligence.png";  
 
 export default function Navbar({ onToggleSidebar }) {
   const { user, isGuest, logout } = useAuth();
