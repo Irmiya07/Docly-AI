@@ -1,12 +1,19 @@
 import json
+import logging
 from typing import List, Dict, Any
 
 from app.services.llm import llm_service
 
 
+logger = logging.getLogger("docly.timeline")
+
+
 class TimelineExtractor:
     """
-    Extract important dates and timeline events from legal clauses.
+    Extract timeline events directly from contract text.
+
+    This is intentionally separate from the full contract analyzer
+    so Timeline does not ask Gemini to generate clauses and risks.
     """
 
     def __init__(self):
@@ -14,24 +21,21 @@ class TimelineExtractor:
 
     def _build_prompt(
         self,
-        clauses: List[Dict[str, Any]]
+        contract_text: str,
     ) -> str:
-        """
-        Build the prompt for timeline extraction.
-        """
 
         return f"""
 You are an expert legal contract analyst.
 
-Extract every important timeline-related event from the contract.
+Extract ONLY important timeline events explicitly stated
+in the supplied contract.
 
-For each event provide:
+Do NOT analyze risks.
+Do NOT extract clauses.
+Do NOT use outside knowledge.
+Do NOT invent dates or events.
 
-- event
-- date
-- description
-
-Examples of events include:
+Extract events such as:
 
 - Contract Start
 - Contract End
@@ -42,40 +46,76 @@ Examples of events include:
 - Warranty Period
 - Expiry Date
 - Milestone
+- Termination Date
+
+For every event return:
+
+- event
+- date
+- description
+
+Preserve dates and time periods exactly as written.
+
+If there are no timeline events, return an empty array.
 
 Return ONLY valid JSON.
 
-Example:
+Expected format:
 
 [
-    {{
-        "event": "Contract Start",
-        "date": "2026-01-01",
-        "description": "Agreement begins."
-    }},
-    {{
-        "event": "Payment Deadline",
-        "date": "Within 30 days",
-        "description": "Buyer must complete payment."
-    }}
+  {{
+    "event": "Contract Start",
+    "date": "January 1, 2026",
+    "description": "The agreement begins on January 1, 2026."
+  }}
 ]
 
-Clauses:
+CONTRACT:
 
-{json.dumps(clauses, indent=2)}
+{contract_text}
 """
 
     def extract(
         self,
-        clauses: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]] | Dict[str, Any]:
-        """
-        Extract timeline events from contract clauses.
-        """
+        contract_text: str,
+    ) -> List[Dict[str, Any]]:
 
-        prompt = self._build_prompt(clauses)
+        if not contract_text or not contract_text.strip():
+            return []
 
-        return self.llm.generate_json(prompt)
+        prompt = self._build_prompt(
+            contract_text
+        )
+
+        result = self.llm.generate_json(
+            prompt
+        )
+
+        # Gemini should return a list.
+        if isinstance(result, list):
+            return result
+
+        # Safety if Gemini returns:
+        # {"timeline": [...]}
+        if isinstance(result, dict):
+
+            timeline = result.get(
+                "timeline",
+                []
+            )
+
+            if isinstance(
+                timeline,
+                list
+            ):
+                return timeline
+
+        logger.warning(
+            "Unexpected timeline response: %s",
+            type(result).__name__,
+        )
+
+        return []
 
 
 timeline_extractor = TimelineExtractor()
