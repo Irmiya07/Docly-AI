@@ -24,7 +24,8 @@ class EmbeddingService:
             print("Loading embedding model...")
 
             self.model = SentenceTransformer(
-                "all-MiniLM-L6-v2"
+                "all-MiniLM-L6-v2",
+                device="cpu"
             )
 
             print("Embedding model loaded.")
@@ -41,6 +42,7 @@ class EmbeddingService:
 
         if not texts:
             return np.array([])
+        print(f"Generating embeddings for {len(texts)} texts")
 
         model = self._get_model()
 
@@ -49,9 +51,9 @@ class EmbeddingService:
             convert_to_numpy=True,
             normalize_embeddings=True,
             show_progress_bar=False,
-            batch_size=16,
+            batch_size=4,
         )
-
+        print("Embeddings generated")
         return embeddings
 
 

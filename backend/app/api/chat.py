@@ -23,6 +23,7 @@ async def chat_router(
 ):
 
     try:
+        print("Chart started")
         retrieved_chunks = await asyncio.to_thread(
             retriever.retrieve,
             query=request.question,
@@ -36,12 +37,13 @@ async def chat_router(
                 "answer": "I couldn't find this information in the uploaded documents.",
                 "citations": []
             }
-
+        print("RETRIEVAL COMPLETE")
         answer = await asyncio.to_thread(
             llm_service.generate_answer,
             request.question,
             retrieved_chunks
         )
+        print("GEMINI COMPLETE")
 
         citations = citation_service.format_sources(
             retrieved_chunks

@@ -31,7 +31,8 @@ class ParserService:
 
             self.reader = easyocr.Reader(
                 ["en"],
-                gpu=False
+                gpu=False,
+                verbose=False
             )
 
             print("EasyOCR model loaded.")
