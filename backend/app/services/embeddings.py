@@ -1,7 +1,10 @@
+import logging
 from typing import List, Optional
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
+
+logger = logging.getLogger("docly.embeddings")
 
 
 class EmbeddingService:
@@ -21,14 +24,14 @@ class EmbeddingService:
         """
 
         if self.model is None:
-            print("Loading embedding model...")
+            logger.info("Loading embedding model...")
 
             self.model = SentenceTransformer(
                 "all-MiniLM-L6-v2",
                 device="cpu"
             )
 
-            print("Embedding model loaded.")
+            logger.info("Embedding model loaded.")
 
         return self.model
 
@@ -42,7 +45,9 @@ class EmbeddingService:
 
         if not texts:
             return np.array([])
-        print(f"Generating embeddings for {len(texts)} texts")
+        
+        logger.info("EMBEDDING START")
+        logger.info(f"Generating embeddings for {len(texts)} texts")
 
         model = self._get_model()
 
@@ -53,8 +58,8 @@ class EmbeddingService:
             show_progress_bar=False,
             batch_size=4,
         )
-        print("Embeddings generated")
+        logger.info("EMBEDDING COMPLETE")
         return embeddings
 
 
-embedding_service = EmbeddingService()
+embedding_service = EmbeddingService()

@@ -49,6 +49,7 @@ class LLMService:
         for client in self.clients:
 
             try:
+                logger.info("GEMINI REQUEST START")
                 logger.info(
                     "Calling Gemini model=%s prompt_chars=%d",
                     self.model,
@@ -59,6 +60,8 @@ class LLMService:
                     model=self.model,
                     contents=prompt,
                 )
+
+                logger.info("GEMINI RESPONSE COMPLETE")
 
                 if not response.text:
                     raise RuntimeError(

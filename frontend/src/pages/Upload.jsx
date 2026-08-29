@@ -48,23 +48,20 @@ export default function Upload() {
   };
 
   const processFiles = async (selectedFiles) => {
-    // Check files eligibility (PDF, DOCX, PNG, JPG, JPEG)
+    // Check files eligibility (PDF, DOCX)
     const allowedTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "image/png",
-      "image/jpeg",
-      "image/jpg"
     ];
 
     const validFiles = selectedFiles.filter((f) => {
       const extension = f.name.split(".").pop().toLowerCase();
-      const isValidExtension = ["pdf", "docx", "png", "jpg", "jpeg"].includes(extension);
+      const isValidExtension = ["pdf", "docx", "doc"].includes(extension);
       return allowedTypes.includes(f.type) || isValidExtension;
     });
 
     if (validFiles.length === 0) {
-      setUploadError("Invalid file types. Please select PDF, DOCX, or Image files.");
+      setUploadError("Invalid file types. Please select PDF or DOCX files.");
       return;
     }
 
@@ -137,7 +134,7 @@ export default function Upload() {
       <div>
         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Upload Documents</h1>
         <p className="text-gray-500 mt-1">
-          Upload PDF, DOCX contracts, or image scans to populate knowledge base.
+          Upload PDF or DOCX contracts to populate your knowledge base.
         </p>
       </div>
 
@@ -174,7 +171,7 @@ export default function Upload() {
               onChange={handleFileChange}
               className="hidden"
               multiple
-              accept=".pdf,.docx,.png,.jpg,.jpeg"
+              accept=".pdf,.docx,.doc"
             />
 
             <div className="flex flex-col items-center">
@@ -197,9 +194,6 @@ export default function Upload() {
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-400"></span> DOCX contracts
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Scans (PNG/JPG)
                 </span>
               </div>
             </div>

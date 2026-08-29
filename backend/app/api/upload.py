@@ -20,7 +20,7 @@ import logging
 import traceback
 
 logger = logging.getLogger("docly.upload")
-ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc"}
 MAX_FILE_SIZE = 15 * 1024 * 1024 # 15MB
 
 @router.post("/")
@@ -34,6 +34,7 @@ async def upload_router(
     and store them in ChromaDB.
     """
 
+  logger.info("UPLOAD START")
   os.makedirs("temp", exist_ok=True)
 
   total_chunks = 0
@@ -80,15 +81,11 @@ async def upload_router(
 
       # Process document extraction in a thread pool
       chunks = await asyncio.to_thread(chunk_service.process_text, [file_path])
+      logger.info("DOCUMENT PARSING COMPLETE")
 
       if not chunks:
          logger.warning(f"No text extracted from {file.filename}.")
          continue
-
-      text = [chunk["text"] for chunk in chunks]
-
-      # Generate embeddings in a thread pool (sentence transformers are CPU/GPU-bound)
-      embeddings = await asyncio.to_thread(embedding_service.generate_embeddings, text)
 
       db = get_db()
       doc_record = {
@@ -102,16 +99,26 @@ async def upload_router(
       document_id = str(result.inserted_id)
 
       now_ts = time.time()
-      for chunk, embedding in zip(chunks, embeddings):
-        chunk["embedding"] = embedding.tolist()
-        chunk["metadata"]["user_id"] = user_id_str
-        chunk["metadata"]["created_at"] = now_ts
-        chunk["metadata"]["is_guest"] = is_guest
-        if document_id:
-          chunk["metadata"]["document_id"] = document_id
+      batch_size = 16
+      for i in range(0, len(chunks), batch_size):
+        batch_chunks = chunks[i : i + batch_size]
+        batch_texts = [c["text"] for c in batch_chunks]
 
-      # Store in vector store in thread pool
-      await asyncio.to_thread(vector_store.add_documents, chunks)
+        # Generate embeddings in a thread pool (sentence transformers are CPU/GPU-bound)
+        batch_embeddings = await asyncio.to_thread(embedding_service.generate_embeddings, batch_texts)
+
+        for chunk, embedding in zip(batch_chunks, batch_embeddings):
+          chunk["embedding"] = embedding.tolist()
+          chunk["metadata"]["user_id"] = user_id_str
+          chunk["metadata"]["created_at"] = now_ts
+          chunk["metadata"]["is_guest"] = is_guest
+          if document_id:
+            chunk["metadata"]["document_id"] = document_id
+
+        # Store in vector store in thread pool
+        await asyncio.to_thread(vector_store.add_documents, batch_chunks)
+        logger.info("CHROMA INSERT COMPLETE")
+
       uploaded_files.append(file.filename)
       total_chunks += len(chunks)
       
@@ -150,7 +157,7 @@ async def list_documents(
   docs = []
   async for doc in cursor:
     ext = doc["filename"].split(".")[-1].lower()
-    mime_type = "image/png"
+    mime_type = "application/octet-stream"
     if ext == "pdf":
       mime_type = "application/pdf"
     elif ext in ["docx", "doc"]:
