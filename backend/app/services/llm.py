@@ -11,6 +11,10 @@ from app.config import (
 
 logger = logging.getLogger("docly.llm")
 
+class GeminiQuotaExceededError(Exception):
+    """Raised when all configured Gemini API keys have exhausted quota."""
+    pass
+
 
 class LLMService:
 
